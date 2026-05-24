@@ -9,8 +9,7 @@
 
 📧 **Author:** Jawwad Hassan — [jawwadhassan76@gmail.com](mailto:jawwadhassan76@gmail.com)  
 🔗 **Repository:** [github.com/Jawwad2723/AI-Voice-Agent](https://github.com/Jawwad2723/AI-Voice-Agent)  
-🎥 **Demo Video:** *(Recording in progress — link will be added here)*
-
+🎥 **Demo Video:** [Watch Here](https://drive.google.com/file/d/1hHw0OmXI_ZQzWLA5b-3XohiXyUKS7BE3/view?usp=sharing)
 ---
 
 ## 📋 Table of Contents
@@ -326,6 +325,10 @@ voice-ai-agent/
 │       ├── database_calls.py      # GET /api/calls/history
 │       ├── scenarios.py           # GET /api/scenarios/
 │       └── webhooks.py            # Webhook endpoints
+├── asterisk_configurations/       # Pre-built Asterisk config files (copy to /etc/asterisk)
+│   ├── ari.conf                   # ARI interface configuration
+│   ├── pjsip.conf                 # PJSIP endpoints, transports, auth
+│   └── extensions.conf            # Dialplan routing to Stasis app
 ├── frontend/
 │   ├── index.html                 # Dashboard UI
 │   ├── app.js                     # Call management, live status polling
@@ -346,7 +349,114 @@ voice-ai-agent/
 - ElevenLabs API key
 - Qwen 2.5-7B model (Ollama) or OpenAI API key
 
-### 1. Asterisk ARI Setup
+---
+
+### 1. Install Asterisk
+
+Install Asterisk 20 on your system (Ubuntu/Debian):
+
+```bash
+sudo apt update && sudo apt install -y asterisk
+```
+
+Or build from source for Asterisk 20 on Ubuntu:
+
+```bash
+cd /usr/src
+sudo wget http://downloads.asterisk.org/pub/telephony/asterisk/asterisk-20-current.tar.gz
+sudo tar xvzf asterisk-20-current.tar.gz
+cd asterisk-20*/
+sudo contrib/scripts/install_prereq install
+sudo ./configure
+sudo make
+sudo make install
+sudo make samples        # installs default config files to /etc/asterisk
+sudo make config         # installs init scripts
+sudo ldconfig
+```
+
+Verify the installation:
+
+```bash
+asterisk -V
+# Expected output: Asterisk 20.x.x
+```
+
+---
+
+### 2. Apply Configuration Files
+
+This repository includes pre-built Asterisk configuration files in the `asterisk_configurations/` folder. Copy them directly into `/etc/asterisk`, replacing the defaults:
+
+```bash
+sudo cp asterisk_configurations/* /etc/asterisk/
+```
+
+> **What these files configure:**
+> - `ari.conf` — Enables the ARI interface and creates the `ariuser` credentials used by the backend
+> - `pjsip.conf` — Sets up PJSIP transport, registers extension **1002** as a SIP account, and defines endpoint **5001** as the AI agent's outbound target
+> - `extensions.conf` — Dialplan that routes all calls through the `asterisk-ai-voice-agent` Stasis application
+
+---
+
+### 3. Register a SIP Account (Extension 1002)
+
+Extension **1002** is pre-configured in `pjsip.conf` as your SIP client account. Register it in any softphone (Zoiper, Linphone, MicroSIP, etc.):
+
+| Field | Value |
+|---|---|
+| **Username / Extension** | `1002` |
+| **Password** | `1002` *(or as set in `pjsip.conf`)* |
+| **Domain / Server** | `<your-asterisk-server-ip>` |
+| **Port** | `5060` |
+| **Transport** | `UDP` |
+
+Once registered, your softphone will show as **Online/Connected**.
+
+---
+
+### 4. Reload Asterisk
+
+Apply the new configuration without restarting the service:
+
+```bash
+sudo asterisk -rx "core reload"
+```
+
+Or if Asterisk is not running, start it:
+
+```bash
+sudo systemctl start asterisk
+```
+
+Verify that ARI is active:
+
+```bash
+sudo asterisk -rx "ari show status"
+# Expected: ARI enabled, HTTP server running
+```
+
+---
+
+### 5. Make a Test Call (Dial 5001)
+
+With extension **1002** registered in your softphone, dial **5001** to reach the AI agent:
+
+```
+Dial: 5001
+```
+
+- **5001** is the AI agent's endpoint defined in `pjsip.conf`
+- Asterisk's dialplan will route the call into the `asterisk-ai-voice-agent` Stasis application
+- The FastAPI backend must be running (see Step 7) for the AI pipeline to answer
+
+> **Outbound calls** (backend-initiated) also originate to `PJSIP/5001`. This is the endpoint string used in the `POST /api/calls/` request body.
+
+---
+
+### 6. Asterisk ARI Setup (Manual Reference)
+
+If you prefer to configure ARI manually instead of using the provided config files, here are the relevant sections:
 
 Enable ARI in `/etc/asterisk/ari.conf`:
 ```ini
@@ -371,7 +481,9 @@ exten => _X.,1,NoOp(Incoming call to AI agent)
 
 Reload Asterisk: `asterisk -rx "core reload"`
 
-### 2. Backend Setup
+---
+
+### 7. Backend Setup
 
 ```bash
 cd backend
@@ -383,7 +495,7 @@ cp .env.example .env
 uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
-### 3. Access the Dashboard
+### 8. Access the Dashboard
 
 Open `http://localhost:8000` in your browser.
 
