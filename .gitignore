@@ -1,0 +1,56 @@
+# Environment — keep secrets out of git (.env.example is safe to commit)
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual Environment
+venv/
+env/
+.venv/
+ENV/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Uvicorn / FastAPI
+*.pid
+
+# Audio / Media artifacts
+*.wav
+*.mp3
+*.ulaw
+*.pcm
+
+# Node modules (if any frontend tooling is added)
+node_modules/
+npm-debug.log*
+
+# Build outputs
+*.bundle.js
+*.min.js
+dist/
+.parcel-cache/

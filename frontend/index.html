@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>VoiceAI Agent — Custom Pipeline</title>
+  <meta name="description" content="Outbound AI calling dashboard powered by Asterisk, Deepgram, Qwen and ElevenLabs."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/style.css"/>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-mark">🎙️</div>
+      <div>
+        <div class="logo-name">VoiceAI Agent</div>
+        <div class="logo-sub">ASTERISK · DEEPGRAM · QWEN · ELEVENLABS</div>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div class="pipeline-chips">
+        <div class="chip" id="chip-dg">
+          <span class="chip-dot"></span><span class="chip-lbl">Deepgram</span>
+        </div>
+        <div class="chip" id="chip-el">
+          <span class="chip-dot"></span><span class="chip-lbl">ElevenLabs</span>
+        </div>
+        <div class="chip" id="chip-llm">
+          <span class="chip-dot"></span><span class="chip-lbl">Qwen</span>
+        </div>
+      </div>
+      <div class="status-pill">
+        <div class="sdot" id="sdot"></div>
+        <span id="stxt">Checking…</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONFIG WARNING -->
+  <div id="warn" style="display:none;align-items:flex-start;gap:12px;margin-top:16px;padding:14px 18px;background:rgba(251,191,36,.05);border:1px solid rgba(251,191,36,.2);border-radius:10px;">
+    <span style="font-size:18px;flex-shrink:0;">⚠️</span>
+    <div style="font-size:13px;color:#fbbf24;line-height:1.5;">
+      <strong>Pipeline not fully configured.</strong><br/>
+      <span class="w-msg"></span>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <main>
+
+    <!-- LEFT: LIVE MONITOR -->
+    <div>
+      <div class="card" id="monitor-card">
+        <div class="card-head">
+          <span class="card-title">Live Call Monitor</span>
+          <div class="live-indicator" id="live-indicator">
+            <span class="pulse-dot"></span>
+            <span id="live-status-text">NO ACTIVE CALL</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Active Call State -->
+          <div id="monitor-active" style="display: none;">
+            <div class="monitor-stats-grid">
+              <div class="m-stat">
+                <label>Scenario</label>
+                <div class="m-val" id="m-scenario">—</div>
+              </div>
+              <div class="m-stat">
+                <label>Agent Identity</label>
+                <div class="m-val" id="m-agent">—</div>
+              </div>
+              <div class="m-stat">
+                <label>Caller</label>
+                <div class="m-val" id="m-caller">—</div>
+              </div>
+              <div class="m-stat">
+                <label>Live Duration</label>
+                <div class="m-val" id="m-duration">0s</div>
+              </div>
+            </div>
+            
+            <div class="live-conversation-box">
+              <div class="live-box-title">🔊 Live Conversational Feed</div>
+              <div class="live-transcript" id="live-transcript-feed">
+                <div style="color:var(--text3); font-size:12px; font-family:var(--mono);">Awaiting feed...</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Idle State -->
+          <div id="monitor-idle">
+            <div class="monitor-idle">
+              <div class="idle-graphic">🎙️</div>
+              <h3>Waiting for Inbound Call</h3>
+              <p>Dial <strong>5001</strong> on your Zoiper softphone to connect to the active AI Agent.</p>
+              
+              <div class="scenarios-list-box">
+                <h4>AI Agent Directory:</h4>
+                <div class="mini-scenarios-grid">
+                  <div class="mini-scenario-item">
+                    <span class="mini-s-emoji">🏥</span>
+                    <div class="mini-s-info">
+                      <div class="mini-s-name">Aria</div>
+                      <div class="mini-s-persona">Appointment Reminder & Confirmation</div>
+                      <div class="mini-s-voice">Voice ID: epkQ8pqDcY2DxhmFi8xl</div>
+                    </div>
+                  </div>
+                  <div class="mini-scenario-item">
+                    <span class="mini-s-emoji">🎯</span>
+                    <div class="mini-s-info">
+                      <div class="mini-s-name">Ethan</div>
+                      <div class="mini-s-persona">Lead Qualification Specialist</div>
+                      <div class="mini-s-voice">Voice ID: BIvP0GN1cAtSRTxNHnWS</div>
+                    </div>
+                  </div>
+                  <div class="mini-scenario-item">
+                    <span class="mini-s-emoji">📊</span>
+                    <div class="mini-s-info">
+                      <div class="mini-s-name">Chloe</div>
+                      <div class="mini-s-persona">Customer Survey Coordinator</div>
+                      <div class="mini-s-voice">Voice ID: ljX1ZrXuDIIRVcmiVSyR</div>
+                    </div>
+                  </div>
+                  <div class="mini-scenario-item">
+                    <span class="mini-s-emoji">💳</span>
+                    <div class="mini-s-info">
+                      <div class="mini-s-name">Marcus</div>
+                      <div class="mini-s-persona">Payment Follow-up Representative</div>
+                      <div class="mini-s-voice">Voice ID: bMxLr8fP6hzNRRi9nJxU</div>
+                    </div>
+                  </div>
+                  <div class="mini-scenario-item">
+                    <span class="mini-s-emoji">🎟️</span>
+                    <div class="mini-s-info">
+                      <div class="mini-s-name">David</div>
+                      <div class="mini-s-persona">Event Coordinator</div>
+                      <div class="mini-s-voice">Voice ID: J2FGlQG8Gd7x8uEDt2H8</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: CALLS + DETAIL -->
+    <div class="r-col">
+
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Call Log</span>
+          <button class="icon-btn" onclick="loadCalls()">↻ Refresh</button>
+        </div>
+        <div class="calls-scroll" id="calls-list">
+          <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            No calls yet. Initiate your first call.
+          </div>
+        </div>
+      </div>
+
+      <!-- Detail Modal -->
+      <div class="detail-card" id="detail-card">
+        <div class="detail-modal">
+          <div class="detail-header">
+            <span id="d-title">Call Details</span>
+            <button class="detail-close-btn" onclick="closeDetail()">✕</button>
+          </div>
+          <div class="d-meta" id="d-meta"></div>
+          <div class="transcript" id="d-transcript">
+            <div style="color:var(--text3);font-size:12px;font-family:var(--mono)">No transcript yet.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- TOASTS -->
+<div class="toasts" id="toasts"></div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
